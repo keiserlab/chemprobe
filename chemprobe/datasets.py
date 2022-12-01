@@ -222,11 +222,13 @@ class ChemProbeDataModule(pl.LightningDataModule):
         raise NotImplementedError
 
     def predict_dataloader(self, num_workers=0):
-        sampler = BatchSampler(SequentialSampler(self.val_dataset), self.batch_size, drop_last=False)
+        sampler = BatchSampler(SequentialSampler(self.pred_dataset), self.batch_size, drop_last=False)
         return DataLoader(
             self.pred_dataset,
+            sampler=sampler,
+            batch_sampler=None,
             batch_size=None,
             num_workers=num_workers,
-            pin_memory=False,
-            shuffle=False,
+            pin_memory=True,
+            shuffle=None,
         )
