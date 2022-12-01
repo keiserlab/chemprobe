@@ -15,7 +15,6 @@ Script to predictionsuate new samples.
 
 # I/O
 from pathlib import Path
-import joblib
 
 # Data handling
 import numpy as np
