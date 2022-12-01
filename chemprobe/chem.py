@@ -41,3 +41,17 @@ def smiles_to_bits(smiles, nBits):
         np_fps.append(arr)
     df = pd.DataFrame(np_fps).astype(np.int8)
     return df
+
+
+def generate_doses(cpds, cl, min=1e-3, max=300, num=32):
+    drc = []
+    for line in cl:
+        for c in cpds:
+            cpd_df = pd.DataFrame(
+                np.geomspace(min, max, num),
+                index=np.repeat(line, num),
+                columns=["cpd_conc_umol"],
+            )
+            cpd_df["cpd_name"] = c
+            drc.append(cpd_df)
+    return pd.concat(drc, ignore_index=False)
