@@ -90,8 +90,8 @@ class ChemProbeDataModule(pl.LightningDataModule):
     @staticmethod
     def add_argparse_args(parent_parser, **kwargs):
         parser = parent_parser.add_argument_group("CTRPDataModule")
-        parser.add_argument("--data_path", type=Path)
-        parser.add_argument("--fold", type=int)
+        parser.add_argument("--data_path", type=Path, required=True)
+        parser.add_argument("--fold", type=int, required=True)
         parser.add_argument("--batch_size", type=int, default=1024)
         parser.add_argument("--permute_labels", action="store_true")
         parser.add_argument("--permute_fingerprints", action="store_true")
@@ -203,7 +203,6 @@ class ChemProbeDataModule(pl.LightningDataModule):
             batch_size=None,
             num_workers=num_workers,
             pin_memory=True,
-            shuffle=None
         )
 
     def val_dataloader(self, num_workers=0):
@@ -215,7 +214,6 @@ class ChemProbeDataModule(pl.LightningDataModule):
             batch_size=None,
             num_workers=num_workers,
             pin_memory=True,
-            shuffle=None,
         )
 
     def test_dataloader(self):
@@ -230,5 +228,4 @@ class ChemProbeDataModule(pl.LightningDataModule):
             batch_size=None,
             num_workers=num_workers,
             pin_memory=True,
-            shuffle=None,
         )
