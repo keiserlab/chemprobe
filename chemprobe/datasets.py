@@ -79,6 +79,7 @@ class ChemProbeDataModule(pl.LightningDataModule):
         batch_size=1024,
         permute_fingerprints=False,
         permute_labels=False,
+        num_workers=0,
     ):
         super().__init__()
         self.data_path = Path(data_path)
@@ -86,6 +87,7 @@ class ChemProbeDataModule(pl.LightningDataModule):
         self.batch_size = batch_size
         self.permute_fingerprints = permute_fingerprints
         self.permute_labels = permute_labels
+        self.num_workers = num_workers
         
     @staticmethod
     def add_argparse_args(parent_parser, **kwargs):
@@ -93,6 +95,7 @@ class ChemProbeDataModule(pl.LightningDataModule):
         parser.add_argument("--data_path", type=Path, required=True)
         parser.add_argument("--fold", type=int, required=True)
         parser.add_argument("--batch_size", type=int, default=1024)
+        parser.add_argument("--num_workers", type=int, default=0)
         parser.add_argument("--permute_labels", action="store_true")
         parser.add_argument("--permute_fingerprints", action="store_true")
         parser.add_argument(
@@ -194,38 +197,38 @@ class ChemProbeDataModule(pl.LightningDataModule):
         if stage == "predict":
             return self.pred_dataset
 
-    def train_dataloader(self, num_workers=0):
+    def train_dataloader(self):
         sampler = BatchSampler(RandomSampler(self.train_dataset), self.batch_size, drop_last=False)
         return DataLoader(
             self.train_dataset,
             sampler=sampler,
             batch_sampler=None,
             batch_size=None,
-            num_workers=num_workers,
+            num_workers=self.num_workers,
             pin_memory=True,
         )
 
-    def val_dataloader(self, num_workers=0):
+    def val_dataloader(self):
         sampler = BatchSampler(SequentialSampler(self.val_dataset), self.batch_size, drop_last=False)
         return DataLoader(
             self.val_dataset,
             sampler=sampler,
             batch_sampler=None,
             batch_size=None,
-            num_workers=num_workers,
+            num_workers=self.num_workers,
             pin_memory=True,
         )
 
     def test_dataloader(self):
         raise NotImplementedError
 
-    def predict_dataloader(self, num_workers=0):
+    def predict_dataloader(self):
         sampler = BatchSampler(SequentialSampler(self.pred_dataset), self.batch_size, drop_last=False)
         return DataLoader(
             self.pred_dataset,
             sampler=sampler,
             batch_sampler=None,
             batch_size=None,
-            num_workers=num_workers,
+            num_workers=self.num_workers,
             pin_memory=True,
         )
