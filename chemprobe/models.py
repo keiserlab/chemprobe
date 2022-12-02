@@ -99,36 +99,43 @@ class FiLMGenerator(nn.Module):
     def __init__(self, exp, in_sz, out_sz, ps=0.1):
         super().__init__()
         self.exp = exp
-        self.gamma = nn.Sequential(nn.Linear(in_sz, in_sz//2), nn.ReLU(), nn.Dropout(ps), nn.Linear(in_sz//2, out_sz))
-        self.beta = nn.Sequential(nn.Linear(in_sz, in_sz//2), nn.ReLU(), nn.Dropout(ps), nn.Linear(in_sz//2, out_sz))
+        if self.exp == "scale" or self.exp == "shift":
+            self.param = nn.Sequential(nn.Linear(in_sz, in_sz//2), nn.ReLU(), nn.Dropout(ps), nn.Linear(in_sz//2, out_sz))
+        elif self.exp == "film":
+            self.gamma = nn.Sequential(nn.Linear(in_sz, in_sz//2), nn.ReLU(), nn.Dropout(ps), nn.Linear(in_sz//2, out_sz))
+            self.beta = nn.Sequential(nn.Linear(in_sz, in_sz//2), nn.ReLU(), nn.Dropout(ps), nn.Linear(in_sz//2, out_sz))
+        else:
+            raise ValueError(
+                f"Experiment type `{self.exp}` not supported."
+            )
 
     def forward(self, x):
-        if self.exp == "scale":
-            gamma = self.gamma(x)
-            beta = torch.zeros_like(gamma)
-        elif self.exp == "shift":
-            beta = self.beta(x)
-            gamma = torch.ones_like(beta)
+        if self.exp == "scale" or self.exp == "shift":
+            return self.param(x)
         elif self.exp == "film":
             gamma = self.gamma(x)
             beta = self.beta(x)
-        else:
-            raise ValueError(
-                f"Experiment type `{self.exp}` not supported for ConditionalNetwork."
-            )
-        return gamma, beta
+            return gamma, beta
 
 
 class FiLMLayer(nn.Module):
     def __init__(self, exp, emb_sz, in_sz, out_sz, ps_film, ps_linear):
         super().__init__()
+        self.exp = exp
         self.film_generator = FiLMGenerator(exp, emb_sz, in_sz, ps=ps_film)
         self.linear_block = LinearBlock(in_sz=in_sz, layers=[in_sz//2], out_sz=out_sz, ps=[ps_linear], use_bn=True, bn_final=False)
 
     def forward(self, data):
         cells, cpds = data
-        gamma, beta = self.film_generator(cpds)
-        cells = gamma * cells + beta
+        if self.exp == "shift":
+            gamma = self.film_generator(cpds)
+            cells = cells * gamma
+        elif self.exp == "scale":
+            beta = self.film_generator(cpds)
+            cells = cells + beta
+        elif self.exp == "film":
+            gamma, beta = self.film_generator(cpds)
+            cells = cells * gamma + beta
         cells = self.linear_block(cells)
         return cells, cpds
 
@@ -217,7 +224,7 @@ class ChemProbe(pl.LightningModule):
         cells_emb = self.cells_emb(cells)
         cpds_emb = self.cpds_emb(cpds)
         target_hat, cpds = self.film_blocks((cells_emb, cpds_emb))
-        target_hat = torch.clamp(target_hat, min=0)
+        target_hat = torch.clamp(target_hat, min=0).squeeze()
         return cells_emb, cpds_emb, target_hat
 
     def training_step(self, batch, batch_idx):
@@ -347,7 +354,7 @@ class ConcatNetwork(pl.LightningModule):
 
     def forward(self, data):
         target_hat = self.mlp(data)
-        target_hat = torch.clamp(target_hat, min=0)
+        target_hat = torch.clamp(target_hat, min=0).squeeze()
         return target_hat
 
     def training_step(self, batch, batch_idx):
