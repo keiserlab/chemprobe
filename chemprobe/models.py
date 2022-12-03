@@ -150,7 +150,7 @@ class ChemProbe(pl.LightningModule):
         exp="film",
         cells_sz=19144,
         cpds_sz=513,
-        emb_sz=32,
+        emb_sz=128,
         n_blocks=2,
         ps_emb=0.2,
         ps_film=0.2,
@@ -173,7 +173,7 @@ class ChemProbe(pl.LightningModule):
         # Model layers
         self.cells_emb = LinearBlock(
             in_sz=cells_sz,
-            layers=[256, 128],
+            layers=[2048, 512, 256],
             out_sz=emb_sz,
             ps=[ps_emb],
             use_bn=True,
@@ -193,10 +193,10 @@ class ChemProbe(pl.LightningModule):
     @staticmethod
     def add_model_specific_args(parent_parser):
         parser = parent_parser.add_argument_group("ConditionalNetwork")
-        parser.add_argument("--nblocks", type=int, default=2)
-        parser.add_argument("--ps_emb", type=float, default=0.2)
-        parser.add_argument("--ps_film", type=float, default=0.2)
-        parser.add_argument("--ps_linear", type=float, default=0.2)
+        parser.add_argument("--n_blocks", type=int, default=2)
+        parser.add_argument("--ps_emb", type=float, default=0.1)
+        parser.add_argument("--ps_film", type=float, default=0.1)
+        parser.add_argument("--ps_linear", type=float, default=0.1)
         parser.add_argument("--lr", type=float, default=1e-3)
         parser.add_argument("--weight_decay", type=float, default=1e-5)
         return parent_parser
@@ -233,7 +233,7 @@ class ChemProbe(pl.LightningModule):
         metrics = self.train_metrics(target_hat, target)
         self.log_dict(
             metrics,
-            on_step=True,
+            on_step=False,
             on_epoch=True,
             prog_bar=True,
             logger=True,
