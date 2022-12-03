@@ -79,6 +79,8 @@ class ChemProbeDataModule(pl.LightningDataModule):
         batch_size=1024,
         permute_fingerprints=False,
         permute_labels=False,
+        pred_cells=None, 
+        pred_cpds=None,
         num_workers=0,
     ):
         super().__init__()
@@ -87,6 +89,8 @@ class ChemProbeDataModule(pl.LightningDataModule):
         self.batch_size = batch_size
         self.permute_fingerprints = permute_fingerprints
         self.permute_labels = permute_labels
+        self.pred_cells = pred_cells
+        self.pred_cpds = pred_cpds
         self.num_workers = num_workers
         
     @staticmethod
@@ -111,7 +115,11 @@ class ChemProbeDataModule(pl.LightningDataModule):
 
     # When doing distributed training, Datamodules have two optional arguments for
     # granular control over download/prepare/splitting data:
-    def prepare_data(self, stage, pred_cells=None, pred_cpds=None):
+    def prepare_data(self):
+        pass
+
+    # OPTIONAL, called for every GPU/machine (assigning state is OK)
+    def setup(self, stage):
 
         if stage == "fit":
             # read
@@ -159,16 +167,17 @@ class ChemProbeDataModule(pl.LightningDataModule):
                 self.val_cells,
                 self.cpds,
             )
+            return self.train_dataset, self.val_dataset
 
         if stage == "test":
             raise NotImplementedError
 
         if stage == "predict":
             # read in custom supplied file
-            self.pred_cells = pd.read_csv(pred_cells, index_col=0)
+            self.pred_cells = pd.read_csv(self.pred_cells, index_col=0)
 
-            if pred_cpds is not None:
-                self.cpds = self.cpds.loc[pred_cpds]
+            if self.pred_cpds is not None:
+                self.cpds = self.cpds.loc[self.pred_cpds]
                 print("Predicting on supplied CTRP compounds...")
             else:
                 print("Predicting on all CTRP compounds...")
@@ -184,17 +193,6 @@ class ChemProbeDataModule(pl.LightningDataModule):
                 self.pred_cells,
                 self.cpds,
             )
-
-    # OPTIONAL, called for every GPU/machine (assigning state is OK)
-    def setup(self, stage):
-
-        if stage == "fit":
-            return self.train_dataset, self.val_dataset
-
-        if stage == "test":
-            raise NotImplementedError
-
-        if stage == "predict":
             return self.pred_dataset
 
     def train_dataloader(self):
