@@ -74,8 +74,8 @@ def process(args, n_splits=5):
         right_on="stripped_cell_line_name",
         how="inner"
     )
-    # format concentations
-    metadata['dose'] = metadata['cpd_conc_umol'] / 1e6
+    # rename concentations
+    metadata['dose'] = metadata['cpd_conc_umol'].values
     # format target
     metadata["viability"] = np.clip(metadata["cpd_pred_pv"], a_min=0.0, a_max=None)
 
