@@ -369,7 +369,7 @@ class ConcatNetwork(pl.LightningModule):
         metrics = self.train_metrics(target_hat, target)
         self.log_dict(
             metrics,
-            on_step=True,
+            on_step=False,
             on_epoch=True,
             prog_bar=True,
             logger=True,
