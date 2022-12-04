@@ -85,7 +85,6 @@ def process(args):
 
     # data
     dm = ChemProbeDataModule.from_argparse_args(args)
-    dm.prepare_data(stage="fit")
     
     # model
     if args.exp in ["concat", "id"]:
@@ -101,7 +100,7 @@ def process(args):
     
     # callbacks
     logger = TensorBoardLogger(
-        save_dir=args.data_path.parent.joinpath("lightning_logs"), name=f"{args.name}-{exp}", version=f"fold={args.fold}",
+        save_dir=args.data_path.parent.joinpath("lightning_logs"), name=f"name={args.name}-exp={exp}", version=f"fold={args.fold}",
     )
     early_stop = EarlyStopping(
         monitor="val_MeanSquaredError", min_delta=1e-4, patience=12, verbose=False, mode="min"
