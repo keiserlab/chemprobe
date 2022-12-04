@@ -151,6 +151,8 @@ class ChemProbe(pl.LightningModule):
         cells_sz=19144,
         cpds_sz=513,
         emb_sz=128,
+        cells_layers=[2048, 512, 256],
+        cpds_layers=[256, 128],
         n_blocks=2,
         ps_emb=0.2,
         ps_film=0.2,
@@ -173,7 +175,7 @@ class ChemProbe(pl.LightningModule):
         # Model layers
         self.cells_emb = LinearBlock(
             in_sz=cells_sz,
-            layers=[2048, 512, 256],
+            layers=cells_layers,
             out_sz=emb_sz,
             ps=[ps_emb],
             use_bn=True,
@@ -181,7 +183,7 @@ class ChemProbe(pl.LightningModule):
         )
         self.cpds_emb = LinearBlock(
             in_sz=cpds_sz,
-            layers=[256, 128],
+            layers=cpds_layers,
             out_sz=emb_sz,
             ps=[ps_emb],
             use_bn=True,
@@ -193,6 +195,9 @@ class ChemProbe(pl.LightningModule):
     @staticmethod
     def add_model_specific_args(parent_parser):
         parser = parent_parser.add_argument_group("ConditionalNetwork")
+        parser.add_argument("--emb_sz", type=int, default=128)
+        parser.add_argument("--cells_layers", type=int, nargs="+", default=[2048, 512, 256])
+        parser.add_argument("--cpds_layers", type=int, nargs="+", default=[256, 128])
         parser.add_argument("--n_blocks", type=int, default=2)
         parser.add_argument("--ps_emb", type=float, default=0.1)
         parser.add_argument("--ps_film", type=float, default=0.1)
@@ -262,7 +267,7 @@ class ChemProbe(pl.LightningModule):
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
         attributions, delta = None, None
-        cells, cpds, _target = batch
+        cells, cpds, target = batch
         cells_emb, cpds_emb, target_hat = self.forward(cells, cpds)
         
         # apply attribution
@@ -275,7 +280,7 @@ class ChemProbe(pl.LightningModule):
             # IG wrapped in predict_step for multi-GPU scaling
             ig = IntegratedGradients(self.forward_attribute)
             attributions, delta = ig.attribute(
-                (cells, cpds[0], cpds[1]),
+                (cells, cpds),
                 baselines=baselines,
                 method="gausslegendre",
                 return_convergence_delta=True,
@@ -345,7 +350,7 @@ class ConcatNetwork(pl.LightningModule):
     def add_model_specific_args(parent_parser):
         parser = parent_parser.add_argument_group("ConcatNetwork")
         parser.add_argument(
-            "--layers", type=list, default=[512, 128, 32, 16, 8]
+            "--layers", type=list, default=[256, 128, 32, 16, 8]
         )
         parser.add_argument("--ps", type=float, default=0.2)
         parser.add_argument("--lr", type=float, default=1e-3)
