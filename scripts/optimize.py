@@ -110,6 +110,10 @@ class Objective:
         kwargs["exp"] = self.exp
 
         # DataModule
+        if self.exp == "id":
+            kwargs["in_sz"] = 19690
+            self.args.onehot_cpds = True
+            Warning("ID model requires one-hot compound encoding, setting to True")
         dm = ChemProbeDataModule.from_argparse_args(self.args)
 
         # Model
