@@ -77,7 +77,7 @@ class ChemProbeDataModule(pl.LightningDataModule):
         data_path,
         fold,
         batch_size=1024,
-        permute_fingerprints=False,
+        onehot_cpds=False,
         permute_labels=False,
         pred_cells=None, 
         pred_cpds=None,
@@ -87,7 +87,7 @@ class ChemProbeDataModule(pl.LightningDataModule):
         self.data_path = Path(data_path)
         self.fold = fold
         self.batch_size = batch_size
-        self.permute_fingerprints = permute_fingerprints
+        self.onehot_cpds = onehot_cpds
         self.permute_labels = permute_labels
         self.pred_cells = pred_cells
         self.pred_cpds = pred_cpds
@@ -101,7 +101,7 @@ class ChemProbeDataModule(pl.LightningDataModule):
         parser.add_argument("--batch_size", type=int, default=1024)
         parser.add_argument("--num_workers", type=int, default=0)
         parser.add_argument("--permute_labels", action="store_true")
-        parser.add_argument("--permute_fingerprints", action="store_true")
+        parser.add_argument("--onehot_cpds", action="store_true", help="One-hot encode compounds")
         parser.add_argument(
             "--pred_cells",
             type=Path,
@@ -130,7 +130,7 @@ class ChemProbeDataModule(pl.LightningDataModule):
             if self.permute_labels:
                 np.random.shuffle(self.metadata["viability"].values)
 
-            if self.permute_fingerprints:
+            if self.onehot_cpds:
                 enc = OneHotEncoder(sparse=False, handle_unknown="ignore")
                 self.cpds = pd.DataFrame(
                     enc.fit_transform(self.cpds.index.values.reshape(-1, 1)),
