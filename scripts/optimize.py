@@ -73,11 +73,8 @@ class Objective:
             # n_blocks or film layers
             kwargs["n_blocks"] = trial.suggest_int("n_blocks", 1, 3)
             # embeddings
-            kwargs["inputs_emb_layers"] = self.define_layers(
-                trial, "n_inputs_emb_layers"
-            )
             kwargs["layers"] = [
-                self.suggest_int(f"layer-{i}", 16, 4096) for i in range(5)
+                trial.suggest_int(f"layer-{i}", 16, 4096) for i in range(5)
             ]
             # dropout
             kwargs["ps"] = trial.suggest_uniform(f"ps", 0.0, 0.5)
@@ -125,7 +122,7 @@ class Objective:
         logger = TensorBoardLogger(
             save_dir=self.logs,
             name=f"exp={args.exp}-fold={args.fold}",
-            version=None,
+            version=f"trial={trial.number}",
         )
         early_stop = EarlyStopping(
             monitor="val_R2Score",
