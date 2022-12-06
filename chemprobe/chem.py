@@ -53,5 +53,7 @@ def generate_doses(cpds, cl, min=1e-3, max=300, num=32):
                 columns=["cpd_conc_umol"],
             )
             cpd_df["cpd_name"] = c
+            cpd_df["ccl_name"] = line
+            cpd_df["dose"] = cpd_df["cpd_conc_umol"]
             drc.append(cpd_df)
     return pd.concat(drc, ignore_index=False)
