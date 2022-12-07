@@ -60,27 +60,27 @@ def format_vanderbilt_hts(predictions):
     # metadata
     nfolds = predictions["fold"].nunique()
     ndoses = predictions["dose"].nunique()
-    n = ndoses * nfolds
 
     # create controls
     vhts = []
     for upid, (grp, data) in enumerate(predictions.groupby(["ccl_name", "cpd_name"])):
+        # create a control "row" per "plate"
         ctrls = pd.DataFrame.from_dict(
             {
-                "ccl_name": np.repeat(grp[0], n),
-                "cpd_conc_umol": np.repeat(0, n),
-                "dose": np.repeat(0, n),
-                "cpd_name": np.repeat(grp[1], n),
-                "pred_viability": np.repeat(1, n),
-                "fold": np.repeat(np.arange(0, nfolds), ndoses),
+                "ccl_name": np.repeat(grp[0], ndoses),
+                "cpd_conc_umol": np.repeat(0, ndoses),
+                "dose": np.repeat(0, ndoses),
+                "cpd_name": np.repeat(grp[1], ndoses),
+                "pred_viability": np.repeat(1, ndoses),
+                "fold": np.repeat(-1, ndoses),
             },
             orient="index",
         ).T
         data = pd.concat([data, ctrls])
         data["well"] = [
             f"{row}{str(col).zfill(2)}"
-            for row in ascii_uppercase[: nfolds * 2]
-            for col in range(1, 33)
+            for row in ascii_uppercase[: nfolds + 1]
+            for col in range(1, ndoses + 1)
         ]
         data["upid"] = upid
         vhts.append(data)
