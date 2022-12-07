@@ -165,6 +165,7 @@ class ChemProbe(pl.LightningModule):
         # Save state
         self.exp = exp
         self.emb_sz = emb_sz
+        self.IG = False
 
         # Metrics
         metrics = MetricCollection([MeanSquaredError(), R2Score()])
