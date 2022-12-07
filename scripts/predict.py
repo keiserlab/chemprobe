@@ -18,6 +18,8 @@ Script to predictionsuate new samples.
 import sys
 import argparse
 from pathlib import Path
+import warnings
+warnings.filterwarnings("ignore")
 from string import ascii_uppercase
 
 # Data handling
@@ -112,6 +114,7 @@ def process(args):
         profiler=None,
         logger=False,
         precision=16,
+        replace_sampler_ddp=False,
     )
 
     # predict
@@ -126,20 +129,24 @@ def process(args):
 
     # format into vanderbilt hts structure
     vhts = format_vanderbilt_hts(predictions)
-    vhts.to_csv(args.output_path.joinpath("predictions_vhts.csv"), index=False)
+    vhts.to_csv(args.data_path.joinpath("predictions_vhts.csv"), index=False)
 
     # read into thunor
+    plate_height = vhts["fold"].nunique() * 2
+    plate_width = vhts["dose"].nunique()
+    print(f"\nPlate height: {plate_height}")
+    print(f"Plate width: {plate_width}\n")
     vhts = read_vanderbilt_hts(
-        args.output_path.joinpath("predictions_vhts.csv"),
-        plate_height=vhts["fold"].nunique() * 2,
-        plate_width=vhts["dose"].nunique(),
+        args.data_path.joinpath("predictions_vhts.csv"),
+        plate_height=plate_height,
+        plate_width=plate_width,
         sep=",",
     )
 
     # fit dose-response curves and write to file
     res, ctrl = viability(vhts)
     params = fit_params(ctrl, res)
-    params.to_pickle(args.output_path.joinpath("params.pkl"))
+    params.to_pickle(args.data_path.joinpath("params.pkl"))
 
 
 def main():
@@ -147,9 +154,6 @@ def main():
     desc = "Script for predicting cellular viability."
     parser = argparse.ArgumentParser(
         description=desc, formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
-    parser.add_argument(
-        "--output_path", type=Path, required=True, help="Directory to save predictions."
     )
     parser.add_argument(
         "--model_path", type=Path, default="../data/trained_models", help="Directory of models."
