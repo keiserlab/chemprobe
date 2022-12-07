@@ -147,6 +147,7 @@ def process(args):
     res, ctrl = viability(vhts)
     params = fit_params(ctrl, res)
     params.to_pickle(args.data_path.joinpath("params.pkl"))
+    print(f"Data written to {args.data_path}")
 
 
 def main():
