@@ -423,6 +423,13 @@ class ChemProbeEnsemble(pl.LightningModule):
                 model_fold.activate_ig()
             self.models.append(model_fold)
             self.attribute = attribute
+        self.save_hyperparameters()
+
+    @staticmethod
+    def add_model_specific_args(parent_parser):
+        parser = parent_parser.add_argument_group("ChemProbeEnsemble")
+        parser.add_argument("--attribute", action="store_true", help="Apply integrated gradients attribution to predictions")
+        return parent_parser
 
     def forward(self, batch, batch_idx):
         target_hat, attributions, delta = [], [], []
