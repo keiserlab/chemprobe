@@ -17,7 +17,7 @@ python train.py \
 
 ## optimize
 python optimize.py \
-    --study_path /srv/danger/scratch/wconnell/chemprobe/optuna/exp=concat \
+    --study_path /srv/danger/scratch/wconnell/chemprobe/optuna/TEST \
     --data_path ../data/preprocessed \
     --exp concat \
     --fold 0 \
@@ -25,3 +25,10 @@ python optimize.py \
     --prune \
     --batch_size 16384 \
     --gpus 0,
+
+## predict
+python predict.py \
+    --cpds ceranib-2 CAY10618 \
+    --data_path ../data/hani \
+    --batch_size 32 \
+    --gpus 2,
