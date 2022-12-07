@@ -195,7 +195,7 @@ class ChemProbe(pl.LightningModule):
 
     @staticmethod
     def add_model_specific_args(parent_parser):
-        parser = parent_parser.add_argument_group("ConditionalNetwork")
+        parser = parent_parser.add_argument_group("ChemProbe")
         parser.add_argument("--emb_sz", type=int, default=128)
         parser.add_argument("--cells_layers", type=int, nargs="+", default=[2048, 512, 256])
         parser.add_argument("--cpds_layers", type=int, nargs="+", default=[256, 128])
