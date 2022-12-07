@@ -319,6 +319,7 @@ class ChemProbePredictDataModule(pl.LightningDataModule):
             sampler=sampler,
             batch_sampler=None,
             batch_size=None,
+            shuffle=None,
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
         )
