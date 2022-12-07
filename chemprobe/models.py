@@ -410,3 +410,42 @@ class ConcatNetwork(pl.LightningModule):
             "lr_scheduler": scheduler,
             "monitor": "val_MeanSquaredError",
         }
+
+
+class ChemProbeEnsemble(pl.LightningModule):
+    def __init__(self, models, attribute=False):
+        super().__init__()
+        self.models = []
+        for model_fold in models:
+            model_fold = ChemProbe.load_from_checkpoint(model_fold)
+            model_fold.eval()
+            if attribute:
+                model_fold.activate_ig()
+            self.models.append(model_fold)
+            self.attribute = attribute
+
+    def forward(self, batch, batch_idx):
+        target_hat, attributions, delta = [], [], []
+        with torch.no_grad():
+            for model_fold in self.models:
+                target_hat_fold, attributions_fold, delta_fold = model_fold.predict_step(batch, batch_idx)
+                target_hat.append(target_hat_fold.reshape(-1, 1))
+            if self.attribute:
+                attributions.append(attributions_fold)
+                delta.append(delta_fold)
+        return torch.cat(target_hat, dim=1), attributions, delta
+
+    def training_step(self, batch, batch_idx):
+        raise NotImplementedError
+
+    def validation_step(self, batch, batch_idx):
+        raise NotImplementedError
+
+    def test_step(self, batch, batch_idx):
+        raise NotImplementedError
+
+    def configure_optimizers(self):
+        raise NotImplementedError
+
+    def predict_step(self, batch, batch_idx, dataloader_idx=None):
+        return self.forward(batch, batch_idx)
