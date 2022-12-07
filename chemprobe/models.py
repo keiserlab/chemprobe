@@ -423,6 +423,7 @@ class ChemProbeEnsemble(pl.LightningModule):
                 model_fold.activate_ig()
             self.models.append(model_fold)
             self.attribute = attribute
+        self.models = nn.ModuleList(self.models)
         self.save_hyperparameters()
 
     @staticmethod
