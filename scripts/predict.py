@@ -100,9 +100,8 @@ def format_vanderbilt_hts(predictions):
 def process(args):
 
     # model
-    models = list(args.model_path.glob("*.ckpt"))
-    print(f"Found models: {models}")
-    ensemble = ChemProbeEnsemble(models, attribute=args.attribute)
+    # TODO load from github instead of locally
+    ensemble = torch.hub.load("../", model="ChemProbeEnsemble", source="local")
     ensemble.eval()
 
     # data
@@ -157,7 +156,7 @@ def main():
         description=desc, formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument(
-        "--model_path", type=Path, default="../data/trained_models", help="Directory of models."
+        "--model_path", type=Path, default="../data/weights", help="Directory of models."
     )
 
     # Model args
