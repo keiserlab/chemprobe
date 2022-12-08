@@ -7,7 +7,7 @@ name = "chemprobe"
 authors = [{name = "William Connell", email = "connell@keiserlab.org"}]
 readme = "README.md"
 dynamic = ["version", "description"]
-dependencies = ["pandas", "scikit-learn", "pytorch-lightning", "rdkit"]
+dependencies = ["pandas", "scikit-learn", "pytorch-lightning", "optuna", "rdkit", "thunor"]
 
 [project.urls]
 Home = "https://github.com/keiserlab/chemprobe"
