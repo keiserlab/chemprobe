@@ -247,7 +247,7 @@ class ChemProbePredictDataModule(pl.LightningDataModule):
 
             # read in CTRP data
             # hard code path to preporocessed cpd fingerprints
-            cpds = pd.read_csv("../data/preprocessed/cpds.csv.gz", index_col=0)
+            cpds = pd.read_csv(Path(__file__).resolve().parent.joinpath("../data/preprocessed/cpds.csv.gz"), index_col=0)
 
             if self.cpds is not None:
                 print(f"Predicting on supplied CTRP compounds: {self.cpds}")
