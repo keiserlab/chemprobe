@@ -416,13 +416,13 @@ class ChemProbeEnsemble(pl.LightningModule):
     def __init__(self, models, attribute=False):
         super().__init__()
         self.models = []
+        self.attribute = attribute
         for model_fold in models:
-            model_fold = ChemProbe.load_from_checkpoint(model_fold)
+            model_fold = torch.load(model_fold)
             model_fold.eval()
-            if attribute:
+            if self.attribute:
                 model_fold.activate_ig()
             self.models.append(model_fold)
-            self.attribute = attribute
         self.models = nn.ModuleList(self.models)
         self.save_hyperparameters()
 
