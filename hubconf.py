@@ -1,4 +1,4 @@
-dependencies = ['torch', 'pytorch_lightning', 'numpy', 'torchmetrics', 'captum']
+dependencies = ['pytorch_lightning', 'captum']
 
 from pathlib import Path
 import torch
@@ -17,7 +17,7 @@ def ChemProbeEnsemble(**kwargs):
         # raise ValueError
         print('Downloading model weights...')
         model_dir.joinpath("chemprobe-ensemble").mkdir(parents=True, exist_ok=False)
-        # TODO store model online
+        # TODO TEST and store model online
         for i in range(5):
             torch.hub.download_url_to_file(f"url/fold={i}.pt", model_dir.joinpath(f"chemprobe-ensemble/fold={i}.pt"))
         model = _ChemProbeEnsemble(models, **kwargs)
