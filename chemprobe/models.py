@@ -13,13 +13,10 @@ Models for predicting cell viability from compound features.
 #    #       #       #       #       #       #       #       #       #       #       #       #       #       #       #       #       #
 ###########################################################################################################################################
 
-# Data handling
-import numpy as np
 
 # Models
 import torch
 from torch import nn
-import torch.nn.functional as F
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import pytorch_lightning as pl
 from torchmetrics import MetricCollection, MeanSquaredError, R2Score
@@ -208,7 +205,7 @@ class ChemProbe(pl.LightningModule):
         return parent_parser
 
     def build_film_layers(self, n_blocks=2, ps_film=0.2, ps_linear=0.2):
-        blocks_sz = [self.emb_sz//i for i in np.arange(2, 2*(n_blocks-1)+2, 2)]
+        blocks_sz = [self.emb_sz//i for i in torch.arange(2, 2*(n_blocks-1)+2, 2)]
         film_layers_sz = [self.emb_sz] + blocks_sz + [1]
         emb_sz = self.emb_sz
         
@@ -421,7 +418,7 @@ class ChemProbeEnsemble(pl.LightningModule):
             model_fold = torch.load(model_fold)
             model_fold.eval()
             if self.attribute:
-                model_fold.activate_ig()
+                model_fold.activate_integrated_gradients()
             self.models.append(model_fold)
         self.models = nn.ModuleList(self.models)
         self.save_hyperparameters()
