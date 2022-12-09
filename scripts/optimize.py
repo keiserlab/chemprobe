@@ -24,6 +24,8 @@ from pytorch_lightning.plugins import DDPPlugin
 # Optuna
 import optuna
 from optuna.integration import PyTorchLightningPruningCallback
+from optuna.study import MaxTrialsCallback
+from optuna.trial import TrialState
 
 # Custom
 from chemprobe.datasets import ChemProbeDataModule
@@ -90,9 +92,9 @@ class Objective:
             kwargs["ps_linear"] = trial.suggest_uniform("ps_linear", 0.0, 0.5)
 
         # learning rate
-        kwargs["learning_rate"] = trial.suggest_uniform("learning_rate", 1e-5, 1e-3)
+        kwargs["learning_rate"] = trial.suggest_uniform("learning_rate", 1e-4, 1e-3)
         # weight decat
-        kwargs["weight_decay"] = trial.suggest_uniform("weight_decay", 1e-5, 1e-3)
+        kwargs["weight_decay"] = trial.suggest_uniform("weight_decay", 1e-4, 1e-3)
 
         return kwargs
 
@@ -182,10 +184,13 @@ def process(args):
     )
 
     # Create study
-    # args.study_path = args.study_path.joinpath(f"exp={args.exp}_fold={args.fold}")
+    args.study_path = args.study_path.joinpath(f"exp={args.exp}/fold={args.fold}")
     study = activate_study(args.study_path, pruner)
     objective = Objective(args)
-    study.optimize(objective, n_trials=args.ntrials)
+    study.optimize(objective, 
+        n_trials=args.n_trials,
+        callbacks=[MaxTrialsCallback(args.n_trials, states=(TrialState.COMPLETE,))]
+    )
 
     print("Number of finished trials: {}".format(len(study.trials)))
 
@@ -207,7 +212,7 @@ if __name__ == "__main__":
         help="Path to SQLite database location (must be on disk - no NFS).",
     )
     parser.add_argument(
-        "--ntrials",
+        "--n_trials",
         type=int,
         default=2,
         help="Number of trials to run on objective function.",
