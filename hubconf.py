@@ -1,20 +1,25 @@
-dependencies = ['torch']
+dependencies = ['torch', 'pytorch_lightning', 'numpy', 'torchmetrics', 'captum']
 
 from pathlib import Path
 import torch
+from chemprobe.models import ChemProbeEnsemble as _ChemProbeEnsemble
 
-def ChemProbeEnsemble():
+def ChemProbeEnsemble(**kwargs):
     """"
     ChemProbeEnsemble model, 5 models trained on separate data folds.
+    attribute: (bool) if True returns attributions for each prediction (default: False)
     """
-    model_dir = Path(__file__).resolve().parent.joinpath("data/weights")
+    model_dir = Path(torch.hub.get_dir())
+    models = [model_dir.joinpath(f"chemprobe-ensemble/fold={i}.pt") for i in range(5)]
     try:
-        model = torch.load(model_dir.joinpath("chemprobe-ensemble.pt"))
+        model = _ChemProbeEnsemble(models, **kwargs)
     except:
+        # raise ValueError
         print('Downloading model weights...')
-        model_dir.mkdir(parents=True, exist_ok=False)
-        # TODO store model somewhere else, not google drive
-        torch.hub.download_url_to_file("https://drive.google.com/file/d/1DYcE46rvbcLgIUyLOI1yD8vbxTk827_8", model_dir.joinpath("chemprobe-ensemble.pt"))
-        model = torch.load("data/weights/chemprobe-ensemble.pt")
+        model_dir.joinpath("chemprobe-ensemble").mkdir(parents=True, exist_ok=False)
+        # TODO store model online
+        for i in range(5):
+            torch.hub.download_url_to_file(f"url/fold={i}.pt", model_dir.joinpath(f"chemprobe-ensemble/fold={i}.pt"))
+        model = _ChemProbeEnsemble(models, **kwargs)
     
     return model
