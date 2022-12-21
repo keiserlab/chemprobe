@@ -6,11 +6,11 @@ conda activate chemprobe
 for FOLD in {0..4}
 do
     python optimize.py \
-    --study_path /srv/danger/scratch/wconnell/chemprobe/optuna/exp=$1 \
+    --study_path /srv/danger/scratch/wconnell/chemprobe/optuna/ \
     --data_path ../data/preprocessed \
     --exp $1 \
     --fold $FOLD \
-    --ntrials 5 \
+    --n_trials 5 \
     --prune \
     --batch_size 16384 \
     --gpus $2,

@@ -6,13 +6,13 @@ bash download_data.sh
 ```
 ## preprocess
 ```
-python scripts/preprocess.py \
+python preprocess.py \
     --data_path ../data
 ```
 
 ## train
 ```
-python scripts/train.py \
+python train.py \
     --name TEST \
     --exp film \
     --fold 0 \
@@ -26,20 +26,20 @@ python scripts/train.py \
 
 ## optimize
 ```
-python scripts/optimize.py \
-    --study_path /srv/danger/scratch/wconnell/chemprobe/optuna/TEST \
+python optimize.py \
+    --study_path /srv/danger/scratch/wconnell/chemprobe/optuna/ \
     --data_path ../data/preprocessed \
-    --exp concat \
+    --exp film \
     --fold 0 \
-    --ntrials 5 \
+    --n_trials 20 \
     --prune \
     --batch_size 16384 \
-    --gpus 0,
+    --gpus 1,
 ```
 
 ## predict
 ```
-python scripts/predict.py \
+python predict.py \
     --cpds ceranib-2 CAY10618 \
     --data_path ../data/hani \
     --batch_size 128 \
