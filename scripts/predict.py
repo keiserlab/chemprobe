@@ -36,6 +36,7 @@ from thunor.viability import viability
 from thunor.curve_fit import fit_params
 
 # Custom
+from chemprobe.bio import PROTCODE_GENES
 from chemprobe.models import ChemProbeEnsemble
 from chemprobe.datasets import ChemProbePredictDataModule
 
@@ -98,10 +99,9 @@ def format_vanderbilt_hts(predictions):
 
 
 def process(args):
-
     # model
     # TODO load from github instead of locally
-    ensemble = torch.hub.load("../", model="ChemProbeEnsemble", source="local")
+    ensemble = torch.hub.load("../", model="ChemProbeEnsemble", source="local", attribute=args.attribute)
     ensemble.eval()
 
     # data
@@ -112,7 +112,7 @@ def process(args):
         args,
         profiler=None,
         logger=False,
-        precision=16,
+        precision=32,
         replace_sampler_ddp=False,
     )
 
@@ -125,10 +125,19 @@ def process(args):
     predictions = pd.concat(
         (dm.pred_metadata.reset_index(drop=True), predictions), axis=1
     )
-
-    # format into vanderbilt hts structure
+    
+    # format predictinos into vanderbilt hts format
     vhts = format_vanderbilt_hts(predictions)
-    vhts.to_csv(args.data_path.joinpath("predictions_vhts.csv"), index=False)
+    vhts.to_csv(args.data_path.joinpath("predictions_vhts.csv.gz"), index=False)
+
+    if args.attribute:
+        # avgeraged attributions across folds for each gene
+        attributions = torch.cat([batch[1] for batch in values]).numpy()
+        attributions = pd.DataFrame(attributions, columns=PROTCODE_GENES)
+        attributions = pd.concat(
+            (dm.pred_metadata.reset_index(drop=True), attributions), axis=1
+        )
+        attributions.to_csv(args.data_path.joinpath("attributions.csv.gz"), index=False)
 
     # read into thunor
     plate_height = vhts["fold"].nunique() * 2
@@ -136,7 +145,7 @@ def process(args):
     print(f"\nPlate height: {plate_height}")
     print(f"Plate width: {plate_width}\n")
     vhts = read_vanderbilt_hts(
-        args.data_path.joinpath("predictions_vhts.csv"),
+        args.data_path.joinpath("predictions_vhts.csv.gz"),
         plate_height=plate_height,
         plate_width=plate_width,
         sep=",",
@@ -154,9 +163,6 @@ def main():
     desc = "Script for predicting cellular viability."
     parser = argparse.ArgumentParser(
         description=desc, formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
-    parser.add_argument(
-        "--model_path", type=Path, default="../data/weights", help="Directory of models."
     )
 
     # Model args

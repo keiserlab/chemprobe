@@ -277,6 +277,7 @@ class ChemProbe(pl.LightningModule):
             )
             # IG wrapped in predict_step for multi-GPU scaling
             ig = IntegratedGradients(self.forward_attribute)
+            # attributions is a tuple of (cells, cpds) attributions
             attributions, delta = ig.attribute(
                 (cells, cpds),
                 baselines=baselines,
@@ -435,9 +436,14 @@ class ChemProbeEnsemble(pl.LightningModule):
             for model_fold in self.models:
                 target_hat_fold, attributions_fold, delta_fold = model_fold.predict_step(batch, batch_idx)
                 target_hat.append(target_hat_fold.reshape(-1, 1))
-            if self.attribute:
-                attributions.append(attributions_fold)
-                delta.append(delta_fold)
+                if self.attribute:
+                    attr_cells, attr_cpds = attributions_fold
+                    attributions.append(attr_cells)
+                    delta.append(delta_fold.reshape(-1, 1))
+        if self.attribute:
+            # take average of each fold attribution
+            attributions = torch.mean(torch.stack(attributions), dim=0)
+            delta = torch.mean(torch.stack(delta), dim=0)
         return torch.cat(target_hat, dim=1), attributions, delta
 
     def training_step(self, batch, batch_idx):
