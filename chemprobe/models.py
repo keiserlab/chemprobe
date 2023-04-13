@@ -431,20 +431,26 @@ class ChemProbeEnsemble(pl.LightningModule):
         return parent_parser
 
     def forward(self, batch, batch_idx):
-        target_hat, attributions, delta = [], [], []
         with torch.no_grad():
-            for model_fold in self.models:
+            results = {i: {'target_hat': [], 'attributions': [], 'delta': []} for i in range(5)}
+            for i, model_fold in enumerate(self.models):
                 target_hat_fold, attributions_fold, delta_fold = model_fold.predict_step(batch, batch_idx)
-                target_hat.append(target_hat_fold.reshape(-1, 1))
+                results[i]['target_hat'].append(target_hat_fold.reshape(-1, 1))
                 if self.attribute:
                     attr_cells, attr_cpds = attributions_fold
-                    attributions.append(attr_cells)
-                    delta.append(delta_fold.reshape(-1, 1))
-        if self.attribute:
-            # take average of each fold attribution
-            attributions = torch.mean(torch.stack(attributions), dim=0)
-            delta = torch.mean(torch.stack(delta), dim=0)
-        return torch.cat(target_hat, dim=1), attributions, delta
+                    results[i]['attributions'].append(attr_cells)
+                    results[i]['delta'].append(delta_fold.reshape(-1, 1))
+            for i, result in results.items():
+                result['target_hat'] = torch.cat(result['target_hat'], dim=0)
+                if self.attribute:
+                    result['attributions'] = torch.cat(result['attributions'], dim=0)
+                    result['delta'] = torch.cat(result['delta'], dim=0)
+        return results
+    
+    def activate_integrated_gradients(self):
+        self.attribute = True
+        for model_fold in self.models:
+            model_fold.activate_integrated_gradients()
 
     def training_step(self, batch, batch_idx):
         raise NotImplementedError
