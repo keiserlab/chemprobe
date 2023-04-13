@@ -303,7 +303,7 @@ class ChemProbePredictDataModule(pl.LightningDataModule):
             df = df[~df.index.duplicated(keep="first")]
             df = df.drop(columns=[filter_by]).T
         return df
-
+    
     def train_dataloader(self):
         raise NotImplementedError
 
@@ -317,6 +317,24 @@ class ChemProbePredictDataModule(pl.LightningDataModule):
         sampler = BatchSampler(SequentialSampler(self.pred_dataset), self.batch_size, drop_last=False)
         return DataLoader(
             self.pred_dataset,
+            sampler=sampler,
+            batch_sampler=None,
+            batch_size=None,
+            shuffle=False,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
+        )
+    
+    def attribute_dataloader(self, df, batch_size=128):
+        self.attr_metadata = df
+        self.attr_dataset = ChemProbeDataset(
+            self.attr_metadata,
+            self.pred_cells,
+            self.cpds,
+        )
+        sampler = BatchSampler(SequentialSampler(self.attr_dataset), batch_size, drop_last=False)
+        return DataLoader(
+            self.attr_dataset,
             sampler=sampler,
             batch_sampler=None,
             batch_size=None,

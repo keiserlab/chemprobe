@@ -25,6 +25,7 @@ from string import ascii_uppercase
 # Data handling
 import numpy as np
 import pandas as pd
+from kneed import KneeLocator
 
 # Pytorch
 import torch
@@ -101,7 +102,7 @@ def format_vanderbilt_hts(predictions):
 def process(args):
     # model
     # TODO load from github instead of locally
-    ensemble = torch.hub.load("../", model="ChemProbeEnsemble", source="local", attribute=args.attribute)
+    ensemble = torch.hub.load("../", model="ChemProbeEnsemble", source="local", attribute=False)
     ensemble.eval()
 
     # data
@@ -117,8 +118,13 @@ def process(args):
     )
 
     # predict
-    values = trainer.predict(ensemble, dm)
-    predictions = torch.cat([batch[0] for batch in values]).numpy()
+    results = trainer.predict(ensemble, dm)
+    predictions = []
+    for batch in results:
+        batch_results = [fold['target_hat'] for fold in batch.values()]
+        predictions.append(torch.cat(batch_results, dim=1))
+    predictions = torch.cat(predictions, dim=0).numpy()
+    del results
     predictions = pd.DataFrame(
         predictions, columns=np.arange(predictions.shape[1])
     )
@@ -130,16 +136,8 @@ def process(args):
     vhts = format_vanderbilt_hts(predictions)
     vhts.to_csv(args.data_path.joinpath("predictions_vhts.csv.gz"), index=False)
 
-    if args.attribute:
-        # avgeraged attributions across folds for each gene
-        attributions = torch.cat([batch[1] for batch in values]).numpy()
-        attributions = pd.DataFrame(attributions, columns=PROTCODE_GENES)
-        attributions = pd.concat(
-            (dm.pred_metadata.reset_index(drop=True), attributions), axis=1
-        )
-        attributions.to_csv(args.data_path.joinpath("attributions.csv.gz"), index=False)
-
     # read into thunor
+    print("Fitting dose-response curves...")
     plate_height = vhts["fold"].nunique() * 2
     plate_width = vhts["dose"].nunique()
     print(f"\nPlate height: {plate_height}")
@@ -151,10 +149,57 @@ def process(args):
         sep=",",
     )
 
-    # fit dose-response curves and write to file
+    # fit dose-response curves
     res, ctrl = viability(vhts)
     params = fit_params(ctrl, res)
+    
+    # filter params
+    params = params.dropna(subset='ic50')
+    x = np.arange(100+1)
+    y = [np.percentile(params['auc'], i) for i in x]
+    kl = KneeLocator(x, y, curve="convex")
+    params = params[params['auc'] < np.percentile(params['auc'], kl.knee-2)]
+
+    # writeout
     params.to_pickle(args.data_path.joinpath("params.pkl"))
+
+    # attribute at IC50
+    if args.attribute:
+        print("Attributing at predicted IC50s...")
+        query = params.reset_index()[['cell_line', 'drug', 'ic50']]
+        query = query.rename(columns={'cell_line': 'ccl_name', 'drug': 'cpd_name', 'ic50': 'dose'})
+        query['dose'] = query['dose'] * 1e6
+        query['viability'] = np.nan
+        
+        dl = dm.attribute_dataloader(query, batch_size=128)
+        ensemble.activate_integrated_gradients()
+        results = trainer.predict(ensemble, dataloaders=dl)
+
+        # write each fold attributions
+        for fold in range(5):
+            attributions = []
+            for batch in results:
+                attributions.append(batch[fold]['attributions'])
+            attributions = torch.abs(torch.cat(attributions, dim=0)).numpy()
+            attributions = pd.DataFrame(attributions, columns=PROTCODE_GENES)
+            attributions = pd.concat(
+                (query.reset_index(drop=True), attributions), axis=1
+            )
+            attributions.to_parquet(args.data_path.joinpath(f"attributions_fold={fold}.parquet"), index=False)
+
+        # averaged attributions across folds for each gene
+        attributions = []
+        for batch in results:
+            a = torch.cat([batch[fold]['attributions'].unsqueeze(0) for fold in range(5)], dim=0)
+            a = torch.mean(torch.abs(a), dim=0)
+            attributions.append(a)
+        attributions = torch.cat(attributions, dim=0).numpy()
+        attributions = pd.DataFrame(attributions, columns=PROTCODE_GENES)
+        attributions = pd.concat(
+            (query.reset_index(drop=True), attributions), axis=1
+        )
+        attributions.to_parquet(args.data_path.joinpath("attributions_avg.parquet"), index=False)
+
     print(f"Data written to {args.data_path}")
 
 
