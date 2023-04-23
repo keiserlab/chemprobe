@@ -51,14 +51,14 @@ def parse_optuna_study(study_path, exp, folds=[0, 1, 2, 3, 4]):
     for fold in folds:
         name = f"exp={exp}-fold={fold}"
         study_stem = Path(f"{study_path}/{name}/")
-        study_db = Path(f"{study_path}/{name}/{name}.db")
+        study_db = Path(f"{study_path}/fold={fold}.db")
         if Path(study_db).exists():
-            study = optuna.load_study(name, f"sqlite:////{str(study_db)}").trials_dataframe()
+            study = optuna.load_study(study_db.stem, f"sqlite:////{str(study_db)}").trials_dataframe()
             study = study[study["state"].isin(["COMPLETE", "PRUNED"])][
                 ["user_attrs_fold", "datetime_start", "number", "value"]
             ]
             number = study.nlargest(columns="value", n=1)["number"].item()
-            study_stem = study_stem.joinpath(f"model_logs/exp={exp}-fold={fold}-trial={number}/")
+            study_stem = study_stem.joinpath(f"trial={number}")
         path = list(
             study_stem
             .joinpath("checkpoints")
@@ -80,8 +80,8 @@ def process(args):
     # name conventions
     exp = args.exp
     if args.permute_labels:
-        study_name = args.study_path.stem
-        exp = f"{study_name}-PERMUTED"
+        # study_name = args.study_path.stem
+        exp = f"{exp}-PERMUTED"
 
     # data
     dm = ChemProbeDataModule.from_argparse_args(args)
@@ -100,7 +100,7 @@ def process(args):
     
     # callbacks
     logger = TensorBoardLogger(
-        save_dir=args.data_path.parent.joinpath("lightning_logs"), name=f"name={args.name}-exp={exp}", version=f"fold={args.fold}",
+        save_dir=args.data_path.parent.joinpath("lightning_logs"), name=f"exp={exp}", version=f"fold={args.fold}",
     )
     early_stop = EarlyStopping(
         monitor="val_MeanSquaredError", min_delta=1e-4, patience=12, verbose=False, mode="min"
