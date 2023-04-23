@@ -24,6 +24,20 @@ python train.py \
     --lr 1e-3
 ```
 
+permuted label model
+```
+python train.py \
+--study_path /scratch/wconnell/danger/chemprobe/optuna/exp=film/fold=0/ \
+--data_path ../data/preprocessed \
+--name perm-fold=0 \
+--exp film \
+--fold 0 \
+--max_epochs 5 \
+--batch_size 16384 \
+--gpus 3, \
+--permute_labels
+```
+
 ## optimize
 ```
 python optimize.py \
