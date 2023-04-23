@@ -11,7 +11,7 @@ def ChemProbeEnsemble(**kwargs):
     attribute: (bool) if True returns attributions for each prediction (default: False)
     """
     model_dir = Path(torch.hub.get_dir()).joinpath("chemprobe")
-    models = [str(model_dir.joinpath(f"fold={i}.pt")) for i in range(5)]
+    models = [model_dir.joinpath(f"fold={i}.pt") for i in range(5)]
     try:
         model = _ChemProbeEnsemble(models, **kwargs)
     except:

@@ -416,7 +416,10 @@ class ChemProbeEnsemble(pl.LightningModule):
         self.models = []
         self.attribute = attribute
         for model_fold in models:
-            model_fold = torch.load(model_fold)
+            if model_fold.suffix == ".ckpt":
+                model_fold = ChemProbe.load_from_checkpoint(model_fold)
+            elif model_fold.suffix == ".pt":
+                model_fold = torch.load(model_fold)
             model_fold.eval()
             if self.attribute:
                 model_fold.activate_integrated_gradients()
