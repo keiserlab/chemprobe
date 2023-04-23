@@ -25,6 +25,7 @@ from string import ascii_uppercase
 # Data handling
 import numpy as np
 import pandas as pd
+import scanpy as sc
 from kneed import KneeLocator
 
 # Pytorch
@@ -182,10 +183,8 @@ def process(args):
                 attributions.append(batch[fold]['attributions'])
             attributions = torch.abs(torch.cat(attributions, dim=0)).numpy()
             attributions = pd.DataFrame(attributions, columns=PROTCODE_GENES)
-            attributions = pd.concat(
-                (query.reset_index(drop=True), attributions), axis=1
-            )
-            attributions.to_parquet(args.data_path.joinpath(f"attributions_fold={fold}.parquet"), index=False)
+            attributions = sc.AnnData(attributions, obs=query.reset_index(drop=True), var=pd.DataFrame(index=PROTCODE_GENES))
+            attributions.write(args.data_path.joinpath(f"attributions_fold={fold}.h5ad"))
 
         # averaged attributions across folds for each gene
         attributions = []
@@ -195,10 +194,8 @@ def process(args):
             attributions.append(a)
         attributions = torch.cat(attributions, dim=0).numpy()
         attributions = pd.DataFrame(attributions, columns=PROTCODE_GENES)
-        attributions = pd.concat(
-            (query.reset_index(drop=True), attributions), axis=1
-        )
-        attributions.to_parquet(args.data_path.joinpath("attributions_avg.parquet"), index=False)
+        attributions = sc.AnnData(attributions, obs=query.reset_index(drop=True), var=pd.DataFrame(index=PROTCODE_GENES))
+        attributions.write(args.data_path.joinpath(f"attributions_avg.h5ad"))
 
     print(f"Data written to {args.data_path}")
 
