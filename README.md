@@ -1,9 +1,15 @@
 # chemprobe
 
+## installation
+```
+pip install chemprobe
+```
+
 ## download data
 ```
 bash download_data.sh
 ```
+
 ## preprocess
 ```
 python preprocess.py \
