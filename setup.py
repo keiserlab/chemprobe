@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="chemprobe",
-    version="0.1.0",
+    version="0.1.1",
     author="William Connell",
     author_email="connell@keiserlab.org",
     description="A package for chemprobe",
@@ -19,7 +19,8 @@ setup(
         "thunor==0.1.29",
         "kneed==0.8.2",
         "captum==0.7.0",
-        "torchmetrics==0.10.3"
+        "torchmetrics==0.10.3",
+        "gdown==4.6.0"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
