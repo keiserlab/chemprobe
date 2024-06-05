@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="chemprobe",
-    version="0.1.1",
+    version="0.1.2",
     author="William Connell",
     author_email="connell@keiserlab.org",
     description="A package for chemprobe",
@@ -27,5 +27,5 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.6,<=3.11.0',
 )
