@@ -20,7 +20,7 @@ def ChemProbeEnsemble(**kwargs):
         model_dir.mkdir(parents=True, exist_ok=False)
         # TODO TEST and store model online
         url = "https://drive.google.com/drive/folders/1bSVeMoFu-9h7gj8ISD9yt8kC_ks9_-Y-?usp=share_link"
-        gdown.download_folder(url, output=model_dir, quiet=True, use_cookies=False)
+        gdown.download_folder(url, output=str(model_dir), quiet=True, use_cookies=False)
         model = _ChemProbeEnsemble(models, **kwargs)
     
     return model
