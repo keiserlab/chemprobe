@@ -103,7 +103,7 @@ def format_vanderbilt_hts(predictions):
 def process(args):
     # model
     # TODO load from github instead of locally
-    ensemble = torch.hub.load("../", model="ChemProbeEnsemble", source="local", attribute=False)
+    ensemble = torch.hub.load("keiserlab/chemprobe", model="ChemProbeEnsemble", source="github", attribute=args.attribute)
     ensemble.eval()
 
     # data
