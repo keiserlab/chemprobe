@@ -13,7 +13,7 @@ setup(
     install_requires=[
         "pandas==1.5.1",
         "scikit-learn==1.1.3",
-        "pytorch-lightning==1.5.8",
+        "pytorch-lightning==1.8.4",
         "optuna==2.10.1",
         "rdkit==2022.9.5",
         "thunor==0.1.29",
@@ -27,5 +27,9 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6,<=3.11.0',
+    python_requires='>=3.7,<=3.11.0',
+    include_package_data=True,
+    package_data={
+        "chemprobe": ["data/cpds.csv.gz"]
+    },
 )

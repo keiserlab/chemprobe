@@ -15,6 +15,7 @@ Script to predictionsuate new samples.
 
 # I/O
 from pathlib import Path
+import importlib.resources as pkg_resources
 
 # Data handling
 import numpy as np
@@ -38,6 +39,12 @@ from chemprobe.bio import PROTCODE_GENES
 #                                                              PRIMARY FUNCTIONS
 #    #       #       #       #       #       #       #       #       #       #       #       #       #       #       #       #       #
 ###########################################################################################################################################
+
+
+def load_cpds():
+    with pkg_resources.path('chemprobe.data.preprocessed', 'cpds.csv.gz') as path:
+        cpds = pd.read_csv(path, index_col=0)
+    return cpds
 
 
 class ChemProbeDataset(Dataset):
@@ -246,8 +253,8 @@ class ChemProbePredictDataModule(pl.LightningDataModule):
             )
 
             # read in CTRP data
-            # hard code path to preporocessed cpd fingerprints
-            cpds = pd.read_csv(Path(__file__).resolve().parent.joinpath("../data/preprocessed/cpds.csv.gz"), index_col=0)
+            # preprocessed FPs included in package
+            cpds = load_cpds()
 
             if self.cpds is not None:
                 print(f"Predicting on supplied CTRP compounds: {self.cpds}")
