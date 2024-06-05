@@ -10,4 +10,7 @@ wget https://ndownloader.figshare.com/files/24613325 -O data/cells/CCLE_expressi
 
 ## Drug sensitivity data
 # CTRP
-wget ftp://caftpd.nci.nih.gov/pub/OCG-DCC/CTD2/Broad/CTRPv2.0_2015_ctd2_ExpandedDataset/CTRPv2.0_2015_ctd2_ExpandedDataset.zip -O data/cpds/CTRPv2.0_2015_ctd2_ExpandedDataset.zip
+wget https://ctd2-data.nci.nih.gov/Public/Broad/CTRPv2.0_2015_ctd2_ExpandedDataset/CTRPv2.0_2015_ctd2_ExpandedDataset.zip -O data/cpds/CTRPv2.0_2015_ctd2_ExpandedDataset.zip
+
+# Unzip the downloaded file
+unzip data/cpds/CTRPv2.0_2015_ctd2_ExpandedDataset.zip -d data/cpds/

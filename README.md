@@ -1,9 +1,16 @@
 # chemprobe
 
+## installation
+Requires `python<=3.11`
+```
+pip install chemprobe
+```
+
 ## download data
 ```
 bash download_data.sh
 ```
+
 ## preprocess
 ```
 python preprocess.py \
