@@ -168,10 +168,10 @@ def process(args):
         print("Attributing at predicted IC50s...")
         query = params.reset_index()[['cell_line', 'drug', 'ic50']]
         query = query.rename(columns={'cell_line': 'ccl_name', 'drug': 'cpd_name', 'ic50': 'dose'})
-        query['dose'] = query['dose'] * 1e6
-        query['viability'] = np.nan
+        query['dose'] = query['dose'] * 1e6 # this is predicted IC50
+        query['viability'] = 0.5 # since we are attributing at IC50
         
-        # trainer with inference_mode=False
+        # trainer with inference_mode=False; req'd to have gradients on in model.predict_step()
         trainer = Trainer.from_argparse_args(
             args,
             profiler=None,
