@@ -42,7 +42,7 @@ from chemprobe.bio import PROTCODE_GENES
 
 
 def load_cpds():
-    with pkg_resources.path('chemprobe.data.preprocessed', 'cpds.csv.gz') as path:
+    with pkg_resources.path('chemprobe.data', 'cpds.csv.gz') as path:
         cpds = pd.read_csv(path, index_col=0)
     return cpds
 
