@@ -266,10 +266,11 @@ class ChemProbe(pl.LightningModule):
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
         attributions, delta = None, None
         cells, cpds, target = batch
-        cells_emb, cpds_emb, target_hat = self.forward(cells, cpds)
         
         # apply attribution
         if self.IG:
+            
+
             baselines = (
                 tuple(b.to(self.device) for b in self.baselines)
                 if isinstance(self.baselines, tuple)
@@ -284,6 +285,10 @@ class ChemProbe(pl.LightningModule):
                 method="gausslegendre",
                 return_convergence_delta=True,
             )
+            target_hat = None
+        else:
+            cells_emb, cpds_emb, target_hat = self.forward(cells, cpds)
+
         return target_hat, attributions, delta
 
     def forward_attribute(self, cells, cpds):
@@ -434,20 +439,21 @@ class ChemProbeEnsemble(pl.LightningModule):
         return parent_parser
 
     def forward(self, batch, batch_idx):
-        with torch.no_grad():
-            results = {i: {'target_hat': [], 'attributions': [], 'delta': []} for i in range(5)}
-            for i, model_fold in enumerate(self.models):
-                target_hat_fold, attributions_fold, delta_fold = model_fold.predict_step(batch, batch_idx)
+        results = {i: {'target_hat': [], 'attributions': [], 'delta': []} for i in range(5)}
+        for i, model_fold in enumerate(self.models):
+            target_hat_fold, attributions_fold, delta_fold = model_fold.predict_step(batch, batch_idx)
+            if self.attribute:
+                attr_cells, attr_cpds = attributions_fold
+                results[i]['attributions'].append(attr_cells)
+                results[i]['delta'].append(delta_fold.reshape(-1, 1))
+            else:
                 results[i]['target_hat'].append(target_hat_fold.reshape(-1, 1))
-                if self.attribute:
-                    attr_cells, attr_cpds = attributions_fold
-                    results[i]['attributions'].append(attr_cells)
-                    results[i]['delta'].append(delta_fold.reshape(-1, 1))
-            for i, result in results.items():
+        for i, result in results.items():
+            if self.attribute:
+                result['attributions'] = torch.cat(result['attributions'], dim=0)
+                result['delta'] = torch.cat(result['delta'], dim=0)
+            else:
                 result['target_hat'] = torch.cat(result['target_hat'], dim=0)
-                if self.attribute:
-                    result['attributions'] = torch.cat(result['attributions'], dim=0)
-                    result['delta'] = torch.cat(result['delta'], dim=0)
         return results
     
     def activate_integrated_gradients(self):

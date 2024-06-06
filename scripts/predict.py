@@ -102,8 +102,7 @@ def format_vanderbilt_hts(predictions):
 
 def process(args):
     # model
-    # TODO load from github instead of locally
-    ensemble = torch.hub.load("keiserlab/chemprobe", model="ChemProbeEnsemble", source="github", attribute=args.attribute)
+    ensemble = torch.hub.load("keiserlab/chemprobe", model="ChemProbeEnsemble", source="github", attribute=False)
     ensemble.eval()
 
     # data
@@ -165,13 +164,23 @@ def process(args):
     params.to_pickle(args.data_path.joinpath("params.pkl"))
 
     # attribute at IC50
-    if args.attribute:
+    if args.attribute:        
         print("Attributing at predicted IC50s...")
         query = params.reset_index()[['cell_line', 'drug', 'ic50']]
         query = query.rename(columns={'cell_line': 'ccl_name', 'drug': 'cpd_name', 'ic50': 'dose'})
         query['dose'] = query['dose'] * 1e6
         query['viability'] = np.nan
         
+        # trainer with inference_mode=False
+        trainer = Trainer.from_argparse_args(
+            args,
+            profiler=None,
+            logger=False,
+            precision=32,
+            replace_sampler_ddp=False,
+            inference_mode=False
+        )
+        dm.setup("attribute")
         dl = dm.attribute_dataloader(query, batch_size=128)
         ensemble.activate_integrated_gradients()
         results = trainer.predict(ensemble, dataloaders=dl)
