@@ -210,7 +210,7 @@ class ChemProbePredictDataModule(pl.LightningDataModule):
     ):
         super().__init__()
         self.data_path = Path(data_path)
-        self.cpds = cpds
+        self.cpds_list = cpds  # Store the original list of compound names
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.pin_memory = pin_memory
@@ -227,14 +227,10 @@ class ChemProbePredictDataModule(pl.LightningDataModule):
         parser.add_argument("--num_workers", type=int, default=0)
         return parent_parser
 
-    # When doing distributed training, Datamodules have two optional arguments for
-    # granular control over download/prepare/splitting data:
     def prepare_data(self):
         pass
 
-    # OPTIONAL, called for every GPU/machine (assigning state is OK)
     def setup(self, stage):
-
         if stage == "fit":
             raise NotImplementedError
 
@@ -242,7 +238,7 @@ class ChemProbePredictDataModule(pl.LightningDataModule):
             raise NotImplementedError
 
         if stage == "predict":
-            # read in custom supplied file
+            # Read in custom supplied file
             self.pred_cells = pd.read_csv(self.data_path.joinpath("cells.csv.gz"), index_col=0)
             self.pred_cells = self.impute_genes(self.pred_cells)
             self.pred_cells = self.filter_genes(self.pred_cells)
@@ -252,13 +248,16 @@ class ChemProbePredictDataModule(pl.LightningDataModule):
                 columns=self.pred_cells.columns
             )
 
-            # read in CTRP data
-            # preprocessed FPs included in package
+            # Read in CTRP data
             cpds = load_cpds()
 
-            if self.cpds is not None:
-                print(f"Predicting on supplied CTRP compounds: {self.cpds}")
-                self.cpds = cpds.loc[self.cpds]
+            if self.cpds_list is not None:
+                available_cpds = cpds.index.intersection(self.cpds_list)
+                if available_cpds.empty:
+                    raise ValueError(f"None of the supplied compounds {self.cpds_list} are found in the CTRP dataset.")
+                else:
+                    self.cpds = cpds.loc[available_cpds]
+                    print(f"Predicting on available CTRP compounds: {available_cpds.tolist()}")
             else:
                 print("Predicting on all CTRP compounds")
                 self.cpds = cpds
