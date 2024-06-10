@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="chemprobe",
-    version="0.1.4",
+    version="0.1.5",
     author="William Connell",
     author_email="connell@keiserlab.org",
     description="A package for chemprobe",
