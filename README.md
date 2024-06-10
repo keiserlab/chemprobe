@@ -2,16 +2,28 @@
 
 ## installation
 Requires `python<=3.11`
+
+To access model & dataset modules:
 ```
 pip install chemprobe
 ```
+To access scripts for preprocessing/training/inference you must install from source:
+```
+git clone https://github.com/keiserlab/chemprobe.git
+cd chemprobe
+# use a virutal env...
+# conda activate env
+pip install .
+```
 
 ## download data
+Required to run inference
 ```
 bash download_data.sh
 ```
 
 ## preprocess
+Required to run inference
 ```
 python preprocess.py \
     --data_path ../data
@@ -61,8 +73,9 @@ python optimize.py \
 ## predict
 ```
 python predict.py \
-    --cpds ceranib-2 CAY10618 \
-    --data_path ../data/hani \
+    --cpds neratinib \ # Do not specify to run on all compounds
+    --data_path ../data/your_data/ \
+    --attribute \ # optional to run attribution
     --batch_size 128 \
     --gpus 2,
 ```
