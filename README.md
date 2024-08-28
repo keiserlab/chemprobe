@@ -1,4 +1,5 @@
-# chemprobe
+# chemprobe 
+[![DOI](https://zenodo.org/badge/572700822.svg)](https://zenodo.org/doi/10.5281/zenodo.13381833)
 
 ## installation
 Requires `python<=3.11`
